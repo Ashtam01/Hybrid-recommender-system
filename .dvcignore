@@ -1,0 +1,20 @@
+# Patterns of files DVC should ignore when scanning the workspace.
+# This improves DVC performance by skipping irrelevant directories.
+# Learn more at https://dvc.org/doc/user-guide/dvcignore
+
+# ===== Virtual Environment =====
+venv/
+.venv/
+env/
+
+# ===== Python Cache =====
+__pycache__/
+*.py[cod]
+
+# ===== IDE / OS =====
+.vscode/
+.idea/
+.DS_Store
+
+# ===== Notebooks checkpoints =====
+.ipynb_checkpoints/

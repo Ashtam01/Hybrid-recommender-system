@@ -1,0 +1,28 @@
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+*.egg
+
+# ===== Virtual Environment =====
+venv/
+.venv/
+env/
+
+# ===== IDE / Editor =====
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# ===== DVC Pipeline Outputs =====
+# These are reproduced by `dvc repro`, tracked by DVC not Git
+/transformer.joblib
+
+# ===== Misc =====
+*.log
+.env
