@@ -1,6 +1,7 @@
 import streamlit as st
 from content_based_filtering import recommend
 from collaborative_filtering import collaborative_recommendation
+from hybrid_recommendations import HybridRecommenderSystem as hrs
 from scipy.sparse import load_npz
 import numpy as np
 import pandas as pd
@@ -37,13 +38,26 @@ if os.path.exists(interaction_matrix_path):
 else:
     interaction_matrix = None
 
+# load the transformed hybrid data
+transformed_hybrid_data_path = "data/transformed_hybrid_data.npz"
+if os.path.exists(transformed_hybrid_data_path):
+    transformed_hybrid_data = load_npz(transformed_hybrid_data_path)
+else:
+    transformed_hybrid_data = None
+
+
 # Title
 st.title('Welcome to the Spotify Song Recommender!')
 
 # Select Filtering Type
-filtering_type = st.radio(
-    "Select Filtering Type",
-    ('Content Based Filtering', 'Collaborative Filtering')
+filtering_type = st.selectbox(
+    label='Select the type of filtering:',
+    options=[
+        'Content-Based Filtering',
+        'Collaborative Filtering',
+        'Hybrid Recommender System'
+    ],
+    index=2
 )
 
 # Subheader
@@ -87,7 +101,7 @@ def render_recommendations(recommendations: pd.DataFrame) -> None:
 
 
 # Button
-if st.button('Get Recommendations'):
+if st.button('Get Recommendations', key='get_recommendations_button'):
     if filtering_type == 'Content Based Filtering':
         if ((data["name"] == song_name) & (data["artist"] == artist_name)).any():
             st.write('Recommendations for', f"**{song_name}** by **{artist_name}**")
@@ -136,5 +150,45 @@ if st.button('Get Recommendations'):
         else:
             st.write(
                 f"Sorry, we couldn't find **{song_name}** by **{artist_name}** in our collaborative data. "
+                f"Please try another song."
+            )
+
+    elif filtering_type == "Hybrid Recommender System":
+        hybrid_ready = (
+            transformed_hybrid_data is not None
+            and interaction_matrix is not None
+            and not filtered_data.empty
+            and {'name', 'artist', 'track_id'}.issubset(filtered_data.columns)
+        )
+
+        if not hybrid_ready:
+            st.write(
+                "Hybrid recommendations are not ready yet. "
+                "Run the DVC pipeline to generate the hybrid outputs."
+            )
+        elif ((filtered_data["name"] == song_name) & (filtered_data["artist"] == artist_name)).any():
+            st.write('Recommendations for', f"**{song_name}** by **{artist_name}**")
+
+            recommender = hrs(
+                song_name=song_name,
+                artist_name=artist_name,
+                number_of_recommendations=k,
+                weight_content_based=0.3,
+                weight_collaborative=0.7,
+                songs_data=filtered_data,
+                transformed_matrix=transformed_hybrid_data,
+                track_ids=track_ids,
+                interaction_matrix=interaction_matrix
+            )
+
+            recommendations = recommender.give_recommendations()
+
+            if recommendations is not None and not recommendations.empty:
+                render_recommendations(recommendations)
+            else:
+                st.write("No recommendations found.")
+        else:
+            st.write(
+                f"Sorry, we couldn't find **{song_name}** by **{artist_name}** in our database. "
                 f"Please try another song."
             )

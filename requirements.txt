@@ -5,3 +5,4 @@ joblib
 streamlit
 dvc
 category_encoders
+dask
