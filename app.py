@@ -15,6 +15,7 @@ cleaned_data_path = "data/cleaned_data.csv"
 # collaborative filtering data paths
 collab_filtered_data_path = "data/collab_filtered_data.csv"
 track_ids_path = "data/track_ids.npy"
+interaction_matrix_path = "data/interaction_matrix.npz"
 
 # load the data
 data = pd.read_csv(cleaned_data_path)
@@ -29,6 +30,12 @@ if os.path.exists(collab_filtered_data_path) and os.path.exists(track_ids_path):
 else:
     filtered_data = pd.DataFrame()
     track_ids = np.array([])
+
+# load the interaction matrix if exists
+if os.path.exists(interaction_matrix_path):
+    interaction_matrix = load_npz(interaction_matrix_path)
+else:
+    interaction_matrix = None
 
 # Title
 st.title('Welcome to the Spotify Song Recommender!')
@@ -59,12 +66,30 @@ k = st.selectbox(
     index=1
 )
 
+def render_recommendations(recommendations: pd.DataFrame) -> None:
+    for ind, recommendation in recommendations.iterrows():
+        rec_song_name = str(recommendation.get('name', '')).title()
+        rec_artist_name = str(recommendation.get('artist', '')).title()
+        preview_url = recommendation.get('spotify_preview_url')
+
+        if ind == 0:
+            st.markdown("## Currently Playing")
+            st.markdown(f"#### **{rec_song_name}** by **{rec_artist_name}**")
+        elif ind == 1:
+            st.markdown("### Next Up 🎵")
+            st.markdown(f"#### {ind}. **{rec_song_name}** by **{rec_artist_name}**")
+        else:
+            st.markdown(f"#### {ind}. **{rec_song_name}** by **{rec_artist_name}**")
+
+        if preview_url is not None and pd.notna(preview_url):
+            st.audio(preview_url)
+        st.write('---')
+
+
 # Button
-if filtering_type == 'Content Based Filtering':
-    if st.button('Get Recommendations'):
-
+if st.button('Get Recommendations'):
+    if filtering_type == 'Content Based Filtering':
         if ((data["name"] == song_name) & (data["artist"] == artist_name)).any():
-
             st.write('Recommendations for', f"**{song_name}** by **{artist_name}**")
 
             recommendations = recommend(
@@ -73,86 +98,43 @@ if filtering_type == 'Content Based Filtering':
                 transformed_data,
                 k
             )
-
-            for ind, recommendation in recommendations.iterrows():
-
-                rec_song_name = recommendation['name'].title()
-                rec_artist_name = recommendation['artist'].title()
-
-                if ind == 0:
-                    st.markdown("## Currently Playing")
-                    st.markdown(
-                        f"#### **{rec_song_name}** by **{rec_artist_name}**"
-                    )
-                    st.audio(recommendation['spotify_preview_url'])
-                    st.write('---')
-
-                elif ind == 1:
-                    st.markdown("### Next Up 🎵")
-                    st.markdown(
-                        f"#### {ind}. **{rec_song_name}** by **{rec_artist_name}**"
-                    )
-                    st.audio(recommendation['spotify_preview_url'])
-                    st.write('---')
-
-                else:
-                    st.markdown(
-                        f"#### {ind}. **{rec_song_name}** by **{rec_artist_name}**"
-                    )
-                    st.audio(recommendation['spotify_preview_url'])
-                    st.write('---')
-
+            render_recommendations(recommendations)
         else:
             st.write(
                 f"Sorry, we couldn't find **{song_name}** by **{artist_name}** in our database. "
                 f"Please try another song."
             )
 
-elif filtering_type == 'Collaborative Filtering':
-    if st.button('Get Recommendations'):
-        if ((filtered_data["name"] == song_name) & (filtered_data["artist"] == artist_name)).any():
+    elif filtering_type == 'Collaborative Filtering':
+        collab_ready = (
+            interaction_matrix is not None
+            and not filtered_data.empty
+            and {'name', 'artist', 'track_id'}.issubset(filtered_data.columns)
+        )
+
+        if not collab_ready:
+            st.write(
+                "Collaborative filtering data is not ready yet. "
+                "Run the DVC pipeline to generate the collaborative outputs."
+            )
+        elif ((filtered_data["name"] == song_name) & (filtered_data["artist"] == artist_name)).any():
             st.write('Recommendations for', f"**{song_name}** by **{artist_name}**")
-            recommendations = collaborative_recommendation(song_name=song_name,
-                                                           artist_name=artist_name,
-                                                           track_ids=track_ids,
-                                                           songs_data=filtered_data)
-            
-            # Note: assuming collaborative_recommendation returns a similar dataframe to recommend()
+
+            recommendations = collaborative_recommendation(
+                song_name=song_name,
+                artist_name=artist_name,
+                track_ids=track_ids,
+                songs_data=filtered_data,
+                interaction_matrix=interaction_matrix,
+                k=k
+            )
+
             if recommendations is not None and not recommendations.empty:
-                for ind, recommendation in recommendations.iterrows():
-
-                    rec_song_name = recommendation['name'].title()
-                    rec_artist_name = recommendation['artist'].title()
-
-                    if ind == 0:
-                        st.markdown("## Currently Playing")
-                        st.markdown(
-                            f"#### **{rec_song_name}** by **{rec_artist_name}**"
-                        )
-                        if 'spotify_preview_url' in recommendation and pd.notna(recommendation['spotify_preview_url']):
-                            st.audio(recommendation['spotify_preview_url'])
-                        st.write('---')
-
-                    elif ind == 1:
-                        st.markdown("### Next Up 🎵")
-                        st.markdown(
-                            f"#### {ind}. **{rec_song_name}** by **{rec_artist_name}**"
-                        )
-                        if 'spotify_preview_url' in recommendation and pd.notna(recommendation['spotify_preview_url']):
-                            st.audio(recommendation['spotify_preview_url'])
-                        st.write('---')
-
-                    else:
-                        st.markdown(
-                            f"#### {ind}. **{rec_song_name}** by **{rec_artist_name}**"
-                        )
-                        if 'spotify_preview_url' in recommendation and pd.notna(recommendation['spotify_preview_url']):
-                            st.audio(recommendation['spotify_preview_url'])
-                        st.write('---')
+                render_recommendations(recommendations)
             else:
                 st.write("No recommendations found.")
         else:
             st.write(
-                f"Sorry, we couldn't find **{song_name}** by **{artist_name}** in our database. "
+                f"Sorry, we couldn't find **{song_name}** by **{artist_name}** in our collaborative data. "
                 f"Please try another song."
             )
