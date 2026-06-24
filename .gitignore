@@ -31,3 +31,8 @@ data/track_ids.npy
 data/collab_filtered_data.csv
 data/interaction_matrix.npz
 data/transformed_hybrid_data.npz
+data/Music Info.csv
+data/cleaned_data.csv
+data/transformed_data.npz
+
+instructions.md

@@ -9,6 +9,7 @@ from sklearn.compose import ColumnTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 from data_cleaning import data_for_content_filtering
 from scipy.sparse import save_npz
+from fuzzy_search import resolve_song_row
 
 # Cleaned Data Path
 CLEANED_DATA_PATH = "data/cleaned_data.csv"
@@ -133,7 +134,7 @@ def calculate_similarity_scores(input_vector, data):
 
     return similarity_scores
 
-def recommend(song_name, songs_data, transformed_data, k=10):
+def recommend(song_name, songs_data, transformed_data, k=10, artist_name=None):
     """
     Recommends top k songs similar to the given song based on content-based filtering.
 
@@ -142,22 +143,23 @@ def recommend(song_name, songs_data, transformed_data, k=10):
     songs_data (DataFrame): The DataFrame containing song information.
     transformed_data (ndarray): The transformed data matrix for similarity calculations.
     k (int, optional): The number of similar songs to recommend. Default is 10.
+    artist_name (str, optional): The artist name used to disambiguate matches.
 
     Returns:
     DataFrame: A DataFrame containing the top k recommended songs with their
                names, artists, and Spotify preview URLs.
     """
 
-    # filter out the song from data
-    song_row = songs_data.loc[songs_data["name"] == song_name, :]
+    # resolve the song row using exact matching first, then fuzzy matching
+    song_row, song_index = resolve_song_row(
+        song_name=song_name,
+        songs_data=songs_data,
+        artist_name=artist_name
+    )
 
-    if song_row.empty:
+    if song_row is None:
         print("Song not found in the dataset.")
     else:
-        # get the index of song
-        song_index = song_row.index[0]
-
-
         # generate the input vector
         input_vector = transformed_data[song_index].reshape(1, -1)
 
@@ -255,5 +257,4 @@ if __name__ == "__main__":
         CLEANED_DATA_PATH,
         "Hips Don't Lie"
     )
-
 

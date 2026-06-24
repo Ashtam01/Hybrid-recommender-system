@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from scipy.sparse import load_npz
 from sklearn.metrics.pairwise import cosine_similarity
+from fuzzy_search import resolve_song_row
 
 
 class HybridRecommenderSystem:
@@ -30,17 +31,31 @@ class HybridRecommenderSystem:
         self.track_ids = track_ids
 
     def _get_input_song_row(self):
-        song_row = self.songs_data.loc[
-            (self.songs_data["name"] == self.song_name) &
-            (self.songs_data["artist"] == self.artist_name)
-        ]
+        song_row, _ = resolve_song_row(
+            song_name=self.song_name,
+            songs_data=self.songs_data,
+            artist_name=self.artist_name
+        )
 
-        if song_row.empty:
+        if song_row is None:
             raise ValueError(
                 f"Song '{self.song_name}' by '{self.artist_name}' was not found."
             )
 
         return song_row
+
+    def _resolve_song_index(self, song_name, artist_name, songs_data):
+        """Resolve a song to its DataFrame index using fuzzy search."""
+        song_row, song_index = resolve_song_row(
+            song_name=song_name,
+            songs_data=songs_data,
+            artist_name=artist_name
+        )
+        if song_row is None:
+            raise ValueError(
+                f"Song '{song_name}' by '{artist_name}' was not found."
+            )
+        return song_row, song_index
 
     def calculate_content_based_similarities(
         self,
@@ -49,14 +64,10 @@ class HybridRecommenderSystem:
         songs_data,
         transformed_matrix
     ):
-        # filter out the song from data
-        song_row = songs_data.loc[
-            (songs_data["name"] == song_name) &
-            (songs_data["artist"] == artist_name)
-        ]
-
-        # get the index of song
-        song_index = song_row.index[0]
+        # resolve the song using fuzzy search
+        _, song_index = self._resolve_song_index(
+            song_name, artist_name, songs_data
+        )
 
         # generate the input vector
         input_vector = transformed_matrix[song_index].reshape(1, -1)
@@ -69,34 +80,33 @@ class HybridRecommenderSystem:
 
         return content_similarity_scores
     def calculate_collaborative_filtering_similarities(
-    self,
-    song_name,
-    artist_name,
-    track_ids,
-    songs_data,
-    interaction_matrix
+        self,
+        song_name,
+        artist_name,
+        track_ids,
+        songs_data,
+        interaction_matrix
     ):
-     # fetch the row from songs data
-     song_row = songs_data.loc[
-        (songs_data["name"] == song_name) &
-        (songs_data["artist"] == artist_name)
-     ]
+        # resolve the song using fuzzy search
+        song_row, _ = self._resolve_song_index(
+            song_name, artist_name, songs_data
+        )
 
-     # track_id of input song
-     input_track_id = song_row['track_id'].values.item()
+        # track_id of input song (song_row is a Series from resolve_song_row)
+        input_track_id = song_row['track_id']
 
-     # index value of track_id
-     ind = np.where(track_ids == input_track_id)[0].item()
+        # index value of track_id
+        ind = np.where(track_ids == input_track_id)[0].item()
 
-     # fetch the input vector
-     input_array = interaction_matrix[ind]
+        # fetch the input vector
+        input_array = interaction_matrix[ind]
 
-     # get similarity scores
-     collaborative_similarity_scores = cosine_similarity(
-        input_array, interaction_matrix
-     )
+        # get similarity scores
+        collaborative_similarity_scores = cosine_similarity(
+            input_array, interaction_matrix
+        )
 
-     return collaborative_similarity_scores
+        return collaborative_similarity_scores
 
     def normalize_similarities(self, similarity_scores):
         minimum = np.min(similarity_scores)
@@ -123,7 +133,8 @@ class HybridRecommenderSystem:
 
     def give_recommendations(self):
         song_row = self._get_input_song_row()
-        input_track_id = song_row["track_id"].values.item()
+        # song_row is a Series from resolve_song_row, access scalar directly
+        input_track_id = song_row["track_id"]
 
         # calculate content based similarities
         content_based_similarities = (

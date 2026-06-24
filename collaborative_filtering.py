@@ -3,6 +3,7 @@ import dask.dataframe as dd
 from scipy.sparse import csr_matrix, save_npz
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
+from fuzzy_search import resolve_song_row
 
 # set paths
 # output paths
@@ -116,14 +117,20 @@ def collaborative_recommendation(
 
     # lowercase the artist name
     artist_name = artist_name.lower()
-    # fetch the row from songs data
-    song_row = songs_data.loc[
-        (songs_data["name"] == song_name) &
-        (songs_data["artist"] == artist_name)
-    ]
+    # resolve the song row using exact matching first, then fuzzy matching
+    song_row, _ = resolve_song_row(
+        song_name=song_name,
+        songs_data=songs_data,
+        artist_name=artist_name
+    )
+
+    if song_row is None:
+        raise ValueError(
+            f"Song '{song_name}' by '{artist_name}' was not found."
+        )
 
     # track_id of input song
-    input_track_id = song_row['track_id'].values.item()
+    input_track_id = song_row['track_id']
     ind = np.where(
         track_ids == input_track_id
     )[0].item()
@@ -191,4 +198,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

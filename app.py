@@ -102,16 +102,17 @@ def render_recommendations(recommendations: pd.DataFrame) -> None:
 
 # Button
 if st.button('Get Recommendations', key='get_recommendations_button'):
-    if filtering_type == 'Content Based Filtering':
-        if ((data["name"] == song_name) & (data["artist"] == artist_name)).any():
-            st.write('Recommendations for', f"**{song_name}** by **{artist_name}**")
+    if filtering_type == 'Content-Based Filtering':
+        recommendations = recommend(
+            song_name,
+            data,
+            transformed_data,
+            k,
+            artist_name=artist_name
+        )
 
-            recommendations = recommend(
-                song_name,
-                data,
-                transformed_data,
-                k
-            )
+        if recommendations is not None and not recommendations.empty:
+            st.write('Recommendations for', f"**{recommendations.iloc[0]['name']}** by **{recommendations.iloc[0]['artist']}**")
             render_recommendations(recommendations)
         else:
             st.write(
@@ -131,9 +132,7 @@ if st.button('Get Recommendations', key='get_recommendations_button'):
                 "Collaborative filtering data is not ready yet. "
                 "Run the DVC pipeline to generate the collaborative outputs."
             )
-        elif ((filtered_data["name"] == song_name) & (filtered_data["artist"] == artist_name)).any():
-            st.write('Recommendations for', f"**{song_name}** by **{artist_name}**")
-
+        else:
             recommendations = collaborative_recommendation(
                 song_name=song_name,
                 artist_name=artist_name,
@@ -144,14 +143,13 @@ if st.button('Get Recommendations', key='get_recommendations_button'):
             )
 
             if recommendations is not None and not recommendations.empty:
+                st.write('Recommendations for', f"**{recommendations.iloc[0]['name']}** by **{recommendations.iloc[0]['artist']}**")
                 render_recommendations(recommendations)
             else:
-                st.write("No recommendations found.")
-        else:
-            st.write(
-                f"Sorry, we couldn't find **{song_name}** by **{artist_name}** in our collaborative data. "
-                f"Please try another song."
-            )
+                st.write(
+                    f"Sorry, we couldn't find **{song_name}** by **{artist_name}** in our collaborative data. "
+                    f"Please try another song."
+                )
 
     elif filtering_type == "Hybrid Recommender System":
         hybrid_ready = (
@@ -166,9 +164,7 @@ if st.button('Get Recommendations', key='get_recommendations_button'):
                 "Hybrid recommendations are not ready yet. "
                 "Run the DVC pipeline to generate the hybrid outputs."
             )
-        elif ((filtered_data["name"] == song_name) & (filtered_data["artist"] == artist_name)).any():
-            st.write('Recommendations for', f"**{song_name}** by **{artist_name}**")
-
+        else:
             recommender = hrs(
                 song_name=song_name,
                 artist_name=artist_name,
@@ -181,14 +177,16 @@ if st.button('Get Recommendations', key='get_recommendations_button'):
                 interaction_matrix=interaction_matrix
             )
 
-            recommendations = recommender.give_recommendations()
-
-            if recommendations is not None and not recommendations.empty:
-                render_recommendations(recommendations)
+            try:
+                recommendations = recommender.give_recommendations()
+            except ValueError:
+                st.write(
+                    f"Sorry, we couldn't find **{song_name}** by **{artist_name}** in our database. "
+                    f"Please try another song."
+                )
             else:
-                st.write("No recommendations found.")
-        else:
-            st.write(
-                f"Sorry, we couldn't find **{song_name}** by **{artist_name}** in our database. "
-                f"Please try another song."
-            )
+                if recommendations is not None and not recommendations.empty:
+                    st.write('Recommendations for', f"**{recommendations.iloc[0]['name']}** by **{recommendations.iloc[0]['artist']}**")
+                    render_recommendations(recommendations)
+                else:
+                    st.write("No recommendations found.")
