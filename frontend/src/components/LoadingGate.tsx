@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
-import { CheckCircle2, CircleDashed } from 'lucide-react';
+import { CheckCircle, CircleDashed } from 'lucide-react';
 
 const PIPELINE_STEPS = [
   "Resolving input row via token distance matching...",
@@ -52,7 +52,7 @@ export function LoadingGate({ onComplete }: { onComplete: () => void }) {
               }`}
             >
               {isDone ? (
-                <CheckCircle2 className="w-5 h-5 text-primary" />
+                <CheckCircle className="w-5 h-5 text-primary" />
               ) : isActive ? (
                 <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 2, ease: "linear" }}>
                   <CircleDashed className="w-5 h-5 text-secondary" />

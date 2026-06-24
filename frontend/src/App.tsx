@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { SeedSearch } from './components/SeedSearch'
-import { TrackCard, TrackProps } from './components/TrackCard'
+import { TrackCard, type TrackProps } from './components/TrackCard'
 import { WeightSlider } from './components/WeightSlider'
 import { LoadingGate } from './components/LoadingGate'
 
@@ -42,24 +42,33 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground relative overflow-hidden">
-      {/* Background Ambient Glows */}
-      <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-secondary/10 rounded-full blur-[150px] pointer-events-none" />
+    <div className="min-h-screen bg-background text-foreground relative overflow-hidden bg-zinc-950">
+      {/* Subtle Ambient Glows & Grain */}
+      <div className="absolute inset-0 bg-grain z-0" />
+      <motion.div 
+        animate={{ opacity: [0.03, 0.06, 0.03] }}
+        transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute top-0 left-[10%] w-[50vw] h-[50vw] bg-primary/20 rounded-full blur-[160px] pointer-events-none z-0" 
+      />
+      <motion.div 
+        animate={{ opacity: [0.02, 0.05, 0.02] }}
+        transition={{ duration: 20, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+        className="absolute bottom-0 right-[10%] w-[60vw] h-[60vw] bg-secondary/15 rounded-full blur-[160px] pointer-events-none z-0" 
+      />
 
       <main className="container mx-auto px-4 py-12 relative z-10 flex flex-col min-h-screen">
         
-        {/* Header */}
+        {/* Sleek Professional Header */}
         <motion.header 
           layoutId="header"
-          className={`flex flex-col items-center gap-6 ${appState === 'idle' ? 'mt-32' : 'mt-4 mb-12'}`}
+          className={`flex flex-col items-center gap-6 ${appState === 'idle' ? 'mt-[15vh]' : 'mt-4 mb-12'}`}
         >
-          <div className="flex flex-col items-center gap-2 text-center">
-            <h1 className="text-5xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-br from-white to-white/60">
-              SONIC GENESIS
+          <div className="flex flex-col items-center gap-3 text-center z-10">
+            <h1 className="text-5xl md:text-6xl font-bold tracking-tight text-zinc-100">
+              SONIC
             </h1>
-            <p className="text-muted-foreground font-medium max-w-md">
-              A Hybrid Recommendation Engine using Content Features & User Interactions.
+            <p className="text-zinc-500 font-medium text-base md:text-lg max-w-2xl tracking-wide">
+              Hybrid recommendation engine powered by content acoustics and user interaction analytics.
             </p>
           </div>
           

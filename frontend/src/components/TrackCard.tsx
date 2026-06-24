@@ -60,20 +60,32 @@ export function TrackCard({ track, index, isSeed = false }: { track: TrackProps,
 
           {/* Audio Features Visualizer */}
           <div className="grid grid-cols-4 gap-2 mt-2 pt-4 border-t border-white/5">
-            <div className="flex flex-col items-center gap-1" title="Danceability">
-              <Disc3 className="w-4 h-4 text-cyan-400" />
+            <div className="flex flex-col items-center gap-1.5" title="Danceability">
+              <div className="flex items-center gap-1.5 text-cyan-400">
+                <Disc3 className="w-3.5 h-3.5" />
+                <span className="text-[10px] font-bold uppercase tracking-wider opacity-80">Dance</span>
+              </div>
               <span className="text-xs font-mono text-muted-foreground">{formatStat(track.danceability)}</span>
             </div>
-            <div className="flex flex-col items-center gap-1" title="Energy">
-              <Zap className="w-4 h-4 text-orange-400" />
+            <div className="flex flex-col items-center gap-1.5" title="Energy">
+              <div className="flex items-center gap-1.5 text-orange-400">
+                <Zap className="w-3.5 h-3.5" />
+                <span className="text-[10px] font-bold uppercase tracking-wider opacity-80">Energy</span>
+              </div>
               <span className="text-xs font-mono text-muted-foreground">{formatStat(track.energy)}</span>
             </div>
-            <div className="flex flex-col items-center gap-1" title="Valence (Positivity)">
-              <Activity className="w-4 h-4 text-yellow-400" />
+            <div className="flex flex-col items-center gap-1.5" title="Valence (Positivity)">
+              <div className="flex items-center gap-1.5 text-yellow-400">
+                <Activity className="w-3.5 h-3.5" />
+                <span className="text-[10px] font-bold uppercase tracking-wider opacity-80">Mood</span>
+              </div>
               <span className="text-xs font-mono text-muted-foreground">{formatStat(track.valence)}</span>
             </div>
-            <div className="flex flex-col items-center gap-1" title="Tempo">
-              <Waves className="w-4 h-4 text-primary" />
+            <div className="flex flex-col items-center gap-1.5" title="Tempo">
+              <div className="flex items-center gap-1.5 text-primary">
+                <Waves className="w-3.5 h-3.5" />
+                <span className="text-[10px] font-bold uppercase tracking-wider opacity-80">Tempo</span>
+              </div>
               <span className="text-xs font-mono text-muted-foreground">{formatBPM(track.tempo)}</span>
             </div>
           </div>
