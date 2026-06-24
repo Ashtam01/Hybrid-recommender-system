@@ -109,14 +109,21 @@ class HybridRecommenderSystem:
         return collaborative_similarity_scores
 
     def normalize_similarities(self, similarity_scores):
-        minimum = np.min(similarity_scores)
-        maximum = np.max(similarity_scores)
+        """
+        Rank-based percentile normalization.
 
-        normalized_scores = (
-            similarity_scores - minimum
-        ) / (maximum - minimum)
-
-        return normalized_scores
+        Min-max normalization fails when one signal is extremely sparse
+        (e.g., 98% of collaborative scores are 0) — it maps all zero-score
+        songs to exactly 0.0, permanently killing them regardless of
+        content score. Rank-based normalization converts raw scores to
+        percentile ranks (0 to 1), so every song gets a fair position
+        based on where it sits in the ranking, not its raw magnitude.
+        """
+        from scipy.stats import rankdata
+        ranks = rankdata(similarity_scores, method='average')
+        # scale to [0, 1]
+        normalized = (ranks - 1) / (len(ranks) - 1)
+        return normalized
 
     def weighted_combination(
         self,
@@ -157,36 +164,23 @@ class HybridRecommenderSystem:
             )
         )
 
-        # normalize content based similarities
-        normalized_content_based_similarities = (
-            self.normalize_similarities(content_based_similarities)
-        )
-
-        # normalize collaborative filtering similarities
-        normalized_collaborative_filtering_similarities = (
-            self.normalize_similarities(
-                collaborative_filtering_similarities
-            )
-        )
-
-        # align both score vectors on the shared track_id catalog
+        # align both score vectors on the shared track_id catalog (raw scores)
         content_scores_df = pd.DataFrame({
             "track_id": self.songs_data["track_id"].to_numpy(),
             "content_score": np.asarray(
-                normalized_content_based_similarities
+                content_based_similarities
             ).ravel()
         })
         collaborative_scores_df = pd.DataFrame({
             "track_id": np.asarray(self.track_ids),
             "collaborative_score": np.asarray(
-                normalized_collaborative_filtering_similarities
+                collaborative_filtering_similarities
             ).ravel()
         })
 
         aligned_scores = (
             content_scores_df
             .merge(collaborative_scores_df, on="track_id", how="inner")
-            .loc[lambda df: df["track_id"] != input_track_id]
             .reset_index(drop=True)
         )
 
@@ -194,6 +188,14 @@ class HybridRecommenderSystem:
             raise ValueError(
                 "No overlapping tracks found between content and collaborative scores."
             )
+
+        # normalize AFTER alignment so both vectors are the same length
+        aligned_scores["content_score"] = self.normalize_similarities(
+            aligned_scores["content_score"].values
+        )
+        aligned_scores["collaborative_score"] = self.normalize_similarities(
+            aligned_scores["collaborative_score"].values
+        )
 
         # weighted combination of similarities
         aligned_scores["weighted_score"] = self.weighted_combination(
@@ -204,14 +206,14 @@ class HybridRecommenderSystem:
         recommendation_track_ids = (
             aligned_scores
             .sort_values(by="weighted_score", ascending=False)
-            .head(self.number_of_recommendations)["track_id"]
+            .head(self.number_of_recommendations + 1)["track_id"]
             .to_numpy()
         )
 
         scores_df = (
             aligned_scores[["track_id", "weighted_score"]]
             .sort_values(by="weighted_score", ascending=False)
-            .head(self.number_of_recommendations)
+            .head(self.number_of_recommendations + 1)
             .rename(columns={"weighted_score": "score"})
         )
 

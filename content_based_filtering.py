@@ -29,7 +29,7 @@ min_max_scale_cols = [
     'valence'
 ]
 
-def train_transformer(data):
+def train_transformer(data, save_path="transformer.joblib"):
     """
     Trains a ColumnTransformer on the provided data and saves the transformer to a file.
 
@@ -42,12 +42,13 @@ def train_transformer(data):
 
     Parameters:
     data (pd.DataFrame): The input data to be transformed.
+    save_path (str): File path to save the trained transformer. Default: 'transformer.joblib'
 
     Returns:
     None
 
     Saves:
-    transformer.joblib: The trained ColumnTransformer object.
+    The trained ColumnTransformer object to save_path.
     """
 
     transformer = ColumnTransformer(transformers=[
@@ -82,21 +83,22 @@ def train_transformer(data):
     transformer.fit(data)
 
     # save the transformer
-    joblib.dump(transformer,"transformer.joblib")
+    joblib.dump(transformer, save_path)
 
-def transform_data(data):
+def transform_data(data, transformer_path="transformer.joblib"):
     """
     Transforms the input data using a pre-trained transformer.
 
     Args:
         data (array-like): The data to be transformed.
+        transformer_path (str): Path to the saved transformer. Default: 'transformer.joblib'
 
     Returns:
         array-like: The transformed data.
     """
 
     # load the transformer
-    transformer = joblib.load("transformer.joblib")
+    transformer = joblib.load(transformer_path)
 
     transformed_data = transformer.transform(data)
 
