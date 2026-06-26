@@ -11,4 +11,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Ping API Health Endpoint
-        run: curl -sSf https://sonic-recommender-api.onrender.com/api/health || exit 1
+        run: curl -sSf https://sonic-cy6k.onrender.com/api/health || exit 1
