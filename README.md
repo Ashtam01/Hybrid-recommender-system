@@ -1,5 +1,8 @@
 <div align="center">
 
+
+<img src="frontend/public/favicon.png" alt="Sonic Logo" width="120" height="120" style="margin-bottom: 20px;" />
+
 # 🎵 SONIC — Hybrid Music Recommender
 
 **A production-grade music recommendation engine that blends content-based acoustics with collaborative filtering from real user listening data.**
