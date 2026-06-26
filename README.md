@@ -1,7 +1,7 @@
 <div align="center">
 
 
-<img src="frontend/public/favicon.png" alt="Sonic Logo" width="120" height="120" style="margin-bottom: 20px;" />
+<img src="frontend/public/sonic_img.webp" alt="Sonic Logo" width="120" height="120" style="margin-bottom: 20px;" />
 
 # 🎵 SONIC — Hybrid Music Recommender
 
