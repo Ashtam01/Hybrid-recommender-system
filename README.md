@@ -7,7 +7,7 @@
 
 **A production-grade music recommendation engine that blends content-based acoustics with collaborative filtering from real user listening data.**
 
-[![Live Demo](https://img.shields.io/badge/🔗_Live_Demo-Vercel-black?style=for-the-badge)](https://sonic-recommender.vercel.app)
+[![Live Demo](https://img.shields.io/badge/🔗_Live_Demo-Vercel-black?style=for-the-badge)](https://hybrid-recommender-system-five.vercel.app/)
 [![API](https://img.shields.io/badge/🔗_API-Render-46E3B7?style=for-the-badge)](https://sonic-recommender-api.onrender.com/docs)
 [![Python](https://img.shields.io/badge/Python-3.9-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
 [![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev)
