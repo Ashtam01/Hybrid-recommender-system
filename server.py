@@ -29,6 +29,8 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # ── Paths ──────────────────────────────────────────────────────────────
+# Docker/Render copies data into data/ at build time (from runtime_data/).
+# Local dev uses data/ directly. Both work with the same path.
 DATA_DIR = Path("data")
 COLLAB_FILTERED_CSV = DATA_DIR / "collab_filtered_data.csv"
 TRANSFORMED_HYBRID_NPZ = DATA_DIR / "transformed_hybrid_data.npz"

@@ -1,0 +1,11 @@
+# Render Blueprint — auto-creates the service from this file
+# https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: sonic-recommender-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.9"

@@ -1,0 +1,41 @@
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Frontend (Vercel handles this separately)
+frontend/
+node_modules/
+
+# Data (raw — runtime_data/ has what we need)
+data/
+
+# DVC cache
+.dvc/cache/
+.dvc/tmp/
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+.DS_Store
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Notebooks
+notebooks/
+
+# Docs
+*.md
+!runtime_data/README.md
+
+# Misc
+*.log
+.env
+.gemini/
