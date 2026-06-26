@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Play, Pause, Disc3, Zap, Activity, Waves } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { Play, Pause, Disc3, Zap, Activity, Waves, VolumeX } from 'lucide-react';
 import { Card, CardContent } from './ui/card';
 import { Badge } from './ui/badge';
 import { motion } from 'framer-motion';
@@ -15,8 +15,58 @@ export interface TrackProps {
   tempo?: number;
 }
 
+// Module-level ref to the currently playing audio — ensures only one track plays at a time
+let globalAudio: HTMLAudioElement | null = null;
+let globalSetPlaying: ((v: boolean) => void) | null = null;
+
 export function TrackCard({ track, index, isSeed = false }: { track: TrackProps, index: number, isSeed?: boolean }) {
   const [isPlaying, setIsPlaying] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const hasPreview = !!track.previewUrl;
+
+  // Clean up on unmount
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+    };
+  }, []);
+
+  const togglePlay = () => {
+    if (!hasPreview) return;
+
+    if (isPlaying) {
+      // Pause current
+      audioRef.current?.pause();
+      setIsPlaying(false);
+      globalAudio = null;
+      globalSetPlaying = null;
+    } else {
+      // Stop whatever else is playing globally
+      if (globalAudio && globalAudio !== audioRef.current) {
+        globalAudio.pause();
+        globalSetPlaying?.(false);
+      }
+
+      // Create audio element if needed, or reuse
+      if (!audioRef.current || audioRef.current.src !== track.previewUrl) {
+        audioRef.current = new Audio(track.previewUrl);
+        audioRef.current.addEventListener("ended", () => {
+          setIsPlaying(false);
+          globalAudio = null;
+          globalSetPlaying = null;
+        });
+      }
+
+      audioRef.current.play();
+      setIsPlaying(true);
+      globalAudio = audioRef.current;
+      globalSetPlaying = setIsPlaying;
+    }
+  };
 
   const formatBPM = (tempo?: number) => tempo ? `${Math.round(tempo)} BPM` : '-- BPM';
   const formatStat = (val?: number) => val ? `${(val * 100).toFixed(0)}%` : '--%';
@@ -34,28 +84,30 @@ export function TrackCard({ track, index, isSeed = false }: { track: TrackProps,
           <div className="flex justify-between items-start gap-4">
             <div className="flex items-center gap-4">
               <button 
-                onClick={() => setIsPlaying(!isPlaying)}
-                className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center transition-all ${
-                  isPlaying ? 'bg-primary text-primary-foreground' : 'bg-white/10 hover:bg-white/20 text-white'
+                onClick={togglePlay}
+                disabled={!hasPreview}
+                title={hasPreview ? (isPlaying ? "Pause preview" : "Play preview") : "No preview available"}
+                className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center transition-all cursor-pointer ${
+                  !hasPreview
+                    ? 'bg-white/5 text-zinc-600 cursor-not-allowed'
+                    : isPlaying
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-white/10 hover:bg-white/20 text-white'
                 }`}
               >
-                {isPlaying ? <Pause className="w-5 h-5 fill-current" /> : <Play className="w-5 h-5 fill-current ml-1" />}
+                {!hasPreview ? (
+                  <VolumeX className="w-5 h-5" />
+                ) : isPlaying ? (
+                  <Pause className="w-5 h-5 fill-current" />
+                ) : (
+                  <Play className="w-5 h-5 fill-current ml-1" />
+                )}
               </button>
               <div className="flex flex-col">
                 <h3 className="font-bold text-lg leading-tight text-white line-clamp-1">{track.name}</h3>
                 <p className="text-muted-foreground text-sm font-medium">{track.artist}</p>
               </div>
             </div>
-            {track.sourceType && (
-              <Badge variant="outline" className={`capitalize shrink-0 ${
-                track.sourceType === 'hybrid' ? 'border-pink-500/50 text-pink-400' :
-                track.sourceType === 'collaborative' ? 'border-secondary/50 text-secondary-foreground' :
-                track.sourceType === 'seed' ? 'border-primary/50 text-primary' :
-                'border-cyan-500/50 text-cyan-400'
-              }`}>
-                {track.sourceType} Match
-              </Badge>
-            )}
           </div>
 
           {/* Audio Features Visualizer */}

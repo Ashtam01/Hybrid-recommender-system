@@ -7,3 +7,5 @@ dvc
 category_encoders
 dask
 rapidfuzz
+fastapi
+uvicorn[standard]

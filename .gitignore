@@ -36,4 +36,4 @@ data/cleaned_data.csv
 data/transformed_data.npz
 
 instructions.md
-/hybrid_transformer.joblib
+design_specification.md
